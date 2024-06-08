@@ -2,6 +2,9 @@ package org.juandavid.springboot.jpa.practicespringbootjpa;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import org.juandavid.springboot.jpa.practicespringbootjpa.entity.Customer;
+import org.juandavid.springboot.jpa.practicespringbootjpa.repository.CustomerCrudRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -12,46 +15,68 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
-import java.util.Objects;
 
 @SpringBootApplication
 public class PracticeSpringBootJpaApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(PracticeSpringBootJpaApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(PracticeSpringBootJpaApplication.class, args);
+    }
 
-	@Bean
-	public CommandLineRunner validateDSCommand(DataSource ds) {
-		return args -> {
-			System.out.println("\n probando la conexión y DS ");
+    @Autowired
+    private CustomerCrudRepository customerCrudRepository;
 
-			Connection conn = ds.getConnection();
-			PreparedStatement ps = conn.prepareStatement("select * from characters");
-			ResultSet rs = ps.executeQuery();
+    @Bean
+    public CommandLineRunner validateDSCommand(DataSource ds) {
+        return args -> {
+            System.out.println("\n probando la conexión y DS ");
 
-			while (rs.next()){
-				String mensaje = rs.getInt("id") + '-' + rs.getString("name");
-				System.out.println(mensaje);
-			}
-		};
-	}
+            Connection conn = ds.getConnection();
+            PreparedStatement ps = conn.prepareStatement("select * from characters");
+            ResultSet rs = ps.executeQuery();
 
-	@Bean
-	public CommandLineRunner validateEntityManagerFact(EntityManagerFactory emf) {
-		return args -> {
+            while (rs.next()) {
+                String mensaje = rs.getInt("id") + '-' + rs.getString("name");
+                System.out.println(mensaje);
+            }
+        };
+    }
 
-			System.out.println("\n probando entityManager fact");
-			EntityManager em = emf.createEntityManager();
-			em.getTransaction().begin();
+    @Bean
+    public CommandLineRunner validateEntityManagerFact(EntityManagerFactory emf) {
+        return args -> {
 
-			 List<Object[]> characters = em.createNativeQuery("select * from characters").getResultList();
+            System.out.println("\n probando entityManager fact");
+            EntityManager em = emf.createEntityManager();
+            em.getTransaction().begin();
 
-			 characters.forEach( character -> {
-				 String mensaje = character[0] + "-" + character[1];
-				 System.out.println(mensaje);
-			 });
-			 em.getTransaction().commit();
-		};
-	}
-}
+            List<Object[]> characters = em.createNativeQuery("select * from characters").getResultList();
+
+            characters.forEach(character -> {
+                String mensaje = character[0] + "-" + character[1];
+                System.out.println(mensaje);
+            });
+            em.getTransaction().commit();
+        };
+
+    }
+
+    @Bean
+    public CommandLineRunner testCustomerRepository(CustomerCrudRepository customerCrudRepository) {
+        return args -> {
+            Customer juan = new Customer();
+            juan.setName("Juan");
+            juan.setPassword("12345");
+
+            customerCrudRepository.save(juan);
+            System.out.println("Se guardo la entidad ");
+
+            System.out.println("\n imprimiendo los clientes ");
+            customerCrudRepository.findAll()
+                    .forEach(System.out::println);
+
+
+        };
+    };
+};
+
